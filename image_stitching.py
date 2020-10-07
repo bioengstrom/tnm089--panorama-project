@@ -27,6 +27,7 @@ print("[INFO] stitching images...")
 stitcher = cv2.createStitcher() if imutils.is_cv3() else cv2.Stitcher_create()
 (status, stitched) = stitcher.stitch(images)
 
+
 # if the status is '0', then OpenCV successfully performed image stitching
 if status == 0:
 	# check to see if we supposed to crop out the largest rectangular
