@@ -9,8 +9,11 @@
 #include "opencv2/stitching.hpp" 
 
 
+// Examples on how to run from terminal
+//stitcher.exe city\S1.jpg city\S2.jpg 
+//stitcher.exe city\S1.jpg city\S2.jpg city\S3.jpg city\S4.jpg city\S5.jpg  
 
-std::string inputMenu() {
+std::string setInputSeq() {
     int option = 0;
     const std::string DEFAULT_SEQUENCE = "strommen/";
 
@@ -42,9 +45,10 @@ std::string inputMenu() {
     return input;
 }
 
-std::string outputMenu() {
+std::string setOutputFile() {
     int option = 0;
-    std::string output;
+    const std::string DEFAULT_OUTPUT_FILE = "result.jpg";
+    std::string output = DEFAULT_OUTPUT_FILE;
 
     std::cout << "\nSpecify output name?\n";
     std::cout << "1. No (default is 'result.jpg')\n2. Yes\n";
@@ -56,7 +60,7 @@ std::string outputMenu() {
     // Handle user option
     switch (option) {
     case 1:
-        output = "result.jpg";
+        //Do nothing, the default output file is already chosen. 
         break;
     case 2:
         std::cout << "Enter the name of the file: \n";
@@ -68,30 +72,58 @@ std::string outputMenu() {
     }
     return output;
 }
-void menu(std::vector<std::string>& settings) {
-    
+void setInputOutput(std::vector<std::string>& settings) {
+
     //Ask user for which input images should be used
-    settings.push_back(inputMenu());
+    settings.push_back(setInputSeq());
     
     //Ask user if they want to specify the name of the output file
-    settings.push_back(outputMenu());
+    settings.push_back(setOutputFile());
 }
 
+bool isRunFromTerminal(int argc) {
+    if (argc == 1) return false;
+    return true;
+}
 
-void getInputImages(std::vector<cv::Mat>& images, int argc, char* argv[]) {
-    std::cout << "passed arguments";
+std::vector<cv::String> getImageNames(int argc, char* argv[], const std::string& seqPath) {
+    std::vector<cv::String> imageNames;
+    //Check if the program is run from the terminal
+    if (!isRunFromTerminal(argc)) {
+        cv::glob(seqPath + "*", imageNames, false);
+    }
+    else {
+        std::vector<cv::String> temp(argv + 1, argv + argc);
+        imageNames = temp;
+    }
+
+    return imageNames;
+}
+
+std::vector<cv::Mat> readImages(const std::vector<cv::String>& imageNames) {
+    std::vector<cv::Mat> images;
+
+    size_t numberOfImages = imageNames.size(); //number of images in input folder
+
+    for (size_t i = 0; i < numberOfImages; i++) {
+        cv::Mat image = cv::imread(imageNames[i]);
+        if (image.empty()) {
+            std::cout << "Can't read image '" << imageNames[i] << "'\n";
+            //TODO: Add status checker here
+            //return -1;
+        }
+        images.push_back(cv::imread(imageNames[i]));
+    }
+
+    return images;
 }
 
 int main(int argc, char* argv[]){
-    char repeat = 'y';
-    while (repeat == 'y' || repeat == 'Y') {
+    char stitchAgain = 'n';
+    do {
         // Define mode for stitching as panoroma  
         // (One out of many functions of Stitcher) 
         cv::Stitcher::Mode mode = cv::Stitcher::PANORAMA;
-
-
-        //stitcher.exe city\S1.jpg city\S2.jpg 
-        //stitcher.exe city\S1.jpg city\S2.jpg city\S3.jpg city\S4.jpg city\S5.jpg  
 
         const std::string repoPath = "C:/Users/Isak_/projects/tnm089/tnm089-panorama-project/";
         std::string inputPath = repoPath + "input/";
@@ -99,32 +131,11 @@ int main(int argc, char* argv[]){
 
         std::vector<std::string> settings = {};
 
-        std::vector<cv::String> imageNames;
-        std::vector<cv::Mat> images;
 
-        //TODO: Create function for reading images etc..
+        setInputOutput(settings);
+        std::vector<cv::String> imageNames = getImageNames(argc, argv, inputPath + settings[0]);
+        std::vector<cv::Mat> inputImages= readImages(imageNames);
 
-        //Check if the program is run from the terminal
-        if (argc == 1) {
-            menu(settings);
-            inputPath += settings[0];
-            cv::glob(inputPath + "*", imageNames, false);
-        }
-        else {
-            std::vector<std::string> temp(argv + 1, argv + argc);
-            imageNames = temp;
-        }
-
-        size_t numberOfImages = imageNames.size(); //number of images in input folder
-
-        for (size_t i = 0; i < numberOfImages; i++) {
-            cv::Mat image = cv::imread(imageNames[i]);
-            if (image.empty()) {
-                std::cout << "Can't read image '" << imageNames[i] << "'\n";
-                return -1;
-            }
-            images.push_back(cv::imread(imageNames[i]));
-        }
 
         // Define object to store the stitched image 
         cv::Mat pano;
@@ -140,9 +151,9 @@ int main(int argc, char* argv[]){
         stitcher->setBlender(blender);
 
         // Command to stitch all the images present in the image array 
-        cv::Stitcher::Status status = stitcher->stitch(images, pano);
+        cv::Stitcher::Status stitchingStatus = stitcher->stitch(inputImages, pano);
 
-        if (status != cv::Stitcher::OK) {
+        if (stitchingStatus != cv::Stitcher::OK) {
             // Check if images could not be stiched 
             // status is OK if images are stiched successfully 
             std::cout << "Can't stitch images\n";
@@ -151,28 +162,29 @@ int main(int argc, char* argv[]){
 
         // Store a new image stiched from the given  
         //set of images as "result.jpg" 
-        std::string fullOutputPath;
-        if (argc == 1) 
-            fullOutputPath = outputPath + settings[1];
-        else 
-            fullOutputPath = outputPath + "result.jpg";
+        std::string outputFileName;
 
-        cv::imwrite(fullOutputPath, pano);
+        if (!isRunFromTerminal(argc)) 
+            outputFileName = settings[1];
+        else 
+            outputFileName = "result.jpg";
+
+        cv::imwrite(outputPath + outputFileName, pano);
 
         // Show the result 
-        cv::imshow("Result", pano);
+        cv::imshow("Stitching result", pano);
 
         cv::waitKey(0);
 
-        std::cout << "\nSuccessfully stitched image, the result has been stored as " << fullOutputPath
-            << ". Would you like to stitch another image? (y/n)\n";
-        std::cin >> repeat;
-        if (repeat != 'y' && repeat != 'Y') {
-            if (repeat != 'n' && repeat != 'N') {
+        std::cout << "\nSuccessfully stitched image, the result has been stored as '" << outputFileName << "'. \nWould you like to stitch another image? (y/n)\n";
+        std::cin >> stitchAgain;
+        
+        if (std::tolower(stitchAgain) != 'y') {
+            if (std::tolower(stitchAgain) != 'n') {
                 std::cout << "Invalid character, exiting program.\n";
             }
             return 0;
         }
-    }
+    } while (std::tolower(stitchAgain) == 'y');
 }
 
