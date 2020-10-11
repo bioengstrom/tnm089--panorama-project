@@ -8,6 +8,7 @@
 #include "opencv2/highgui.hpp" 
 #include "opencv2/stitching.hpp" 
 
+#include "../src/MultiBandBlender.h"
 
 // Examples on how to run from terminal
 //stitcher.exe city\S1.jpg city\S2.jpg 
@@ -18,7 +19,7 @@ std::string setInputSeq() {
     const std::string DEFAULT_SEQUENCE = "strommen/";
 
     std::cout << "Which image sequence should be stitched: \n";
-    std::cout << "1. Strommen (default)\n2. City\n3. TP6\n4. Specify another sequence(not implemented)\n";
+    std::cout << "1. Strommen (default)\n2. City\n3. Fruits\n4. Specify another sequence(not implemented)\n";
 
     // Read user option
     std::cout << "Your choice: ";
@@ -34,7 +35,7 @@ std::string setInputSeq() {
         input = "city/";
         break;
     case 3:
-        input = "tp6/";
+        input = "fruits/";
         break;
     case 4:
         input = "foo/";
@@ -143,12 +144,18 @@ int main(int argc, char* argv[]){
         // Create a Stitcher class object with mode panoroma 
         cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(mode);
 
+        int blendBandAmount;
+        std::cout << "Select the amount of bands you would like to blend with.\n";
+        std::cin >> blendBandAmount;
+
+
         //Create Blender
         cv::Ptr<cv::detail::Blender> blender = cv::detail::Blender::createDefault(cv::detail::Blender::MULTI_BAND);
         cv::detail::MultiBandBlender* mb = dynamic_cast<cv::detail::MultiBandBlender*>(blender.get());
-        mb->setNumBands(1);
-
+        mb->setNumBands(blendBandAmount);
+        
         stitcher->setBlender(blender);
+
 
         // Command to stitch all the images present in the image array 
         cv::Stitcher::Status stitchingStatus = stitcher->stitch(inputImages, pano);
@@ -187,4 +194,3 @@ int main(int argc, char* argv[]){
         }
     } while (std::tolower(stitchAgain) == 'y');
 }
-
