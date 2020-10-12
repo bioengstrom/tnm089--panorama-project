@@ -8,7 +8,6 @@
 #include "opencv2/highgui.hpp" 
 #include "opencv2/stitching.hpp" 
 
-#include "../src/MultiBandBlender.h"
 
 // Examples on how to run from terminal
 //stitcher.exe city\S1.jpg city\S2.jpg 
@@ -19,7 +18,7 @@ std::string setInputSeq() {
     const std::string DEFAULT_SEQUENCE = "strommen/";
 
     std::cout << "Which image sequence should be stitched: \n";
-    std::cout << "1. Strommen (default)\n2. City\n3. Fruits\n4. Specify another sequence(not implemented)\n";
+    std::cout << "1. Strommen (default)\n2. City\n3. Fruits\n4. Strommen1\n";
 
     // Read user option
     std::cout << "Your choice: ";
@@ -38,7 +37,7 @@ std::string setInputSeq() {
         input = "fruits/";
         break;
     case 4:
-        input = "foo/";
+        input = "strommen1/";
         break;
     default:
         std::cout << "Wrong option, default sequence was chosen.\n";
