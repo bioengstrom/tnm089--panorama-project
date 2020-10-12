@@ -13,8 +13,19 @@ void MultiBandBlender::PreProcess() {
 
 	ProcessNumBands();
 	PrepImages();
+	TestPyramids();
 
+	
 	std::cout << "Finished pre process\n";
+}
+
+void MultiBandBlender::TestPyramids() {
+	std::vector<cv::Mat> testLP = LaplacianPyramid(_img1);
+	std::vector<cv::Mat> testGP = GaussianPyramid(_mask);
+
+	std::cout << "LP test size: " << testLP[0].size() << "\t" << testLP[_numBands - 1].size() << "\n";
+	std::cout << "GP test size: " << testGP[0].size() << "\t" << testGP[_numBands - 1].size() << "\n";
+
 }
 
 void MultiBandBlender::ProcessNumBands() {
@@ -36,12 +47,26 @@ std::vector<cv::Mat> MultiBandBlender::LaplacianPyramid(const cv::Mat& inImg) {
 
 	for (int i = 0; i < _numBands - 1; ++i) {
 		cv::pyrDown(img, nextImg, cv::Size(img.cols / 2, img.rows / 2));
-		cv::pyrUp(nextImg, upSampledImg, cv::Size(img.cols * 2, img.rows * 2));
+		cv::pyrUp(nextImg, upSampledImg, cv::Size(nextImg.cols * 2, nextImg.rows * 2));
 
 		result.push_back(img - upSampledImg);
 		img = nextImg;
 	}
 	result.push_back(img);
+
+	return result;
+}
+
+std::vector<cv::Mat> MultiBandBlender::GaussianPyramid(const cv::Mat& inImg) {
+	std::vector<cv::Mat> result;
+	cv::Mat img = inImg;
+	cv::Mat nextImg; 
+	result.push_back(img);
+
+	for (int i = 0; i < _numBands - 1; ++i) {
+		cv::pyrDown(result[i], nextImg, cv::Size(result[i].cols / 2, result[i].rows / 2));
+		result.push_back(nextImg);
+	}
 
 	return result;
 }
@@ -60,20 +85,25 @@ void MultiBandBlender::PrepImages() {
 		_subA = cv::Mat::zeros(_resSize, _img1.type());
 		cv::Rect roiA = cv::Rect(0, 0, (_img1.cols + _overlapWidth) / 2, _resHeight);
 		_img1(roiA).copyTo(_subA(roiA));
-		
-		cv::imshow("subA", _subA);
-		cv::waitKey(0);
 
 		_subB = cv::Mat::zeros(_resSize, _img1.type());
 		cv::Rect roiB = cv::Rect(_resWidth / 2 + _overlapWidth / 2, 0, (_img2.cols - _overlapWidth) / 2, _resHeight);
 		_img2(roiB).copyTo(_subB(roiB));
 
-		cv::imshow("subB", _subB);
-		cv::waitKey(0);
-
 		_mask = cv::Mat::zeros(_resSize, _img1.type());
 		cv::Rect roiMask = cv::Rect(_resWidth / 2 + _overlapWidth / 2, 0, (_img1.cols - _overlapWidth) / 2, _resHeight);
 		_mask(roiMask).setTo(255);
+		
+		/*
+		cv::imshow("subA", _subA);
+		cv::waitKey(0);
+		*/
+		
+		/*
+		cv::imshow("subB", _subB);
+		cv::waitKey(0);
+		*/
+		
 		/*
 		cv::imshow("Mask", _mask);
 		cv::waitKey(0);
