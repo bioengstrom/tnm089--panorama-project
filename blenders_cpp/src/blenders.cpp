@@ -132,8 +132,9 @@ int main(int argc, char* argv[]) {
     std::vector<cv::String> imageNames = getImageNames(argc, argv, inputPath + settings[0]);
     std::vector<cv::Mat> inputImages = readImages(imageNames);
 
-    MultiBandBlender b(inputImages[0], inputImages[1], 9, -300);
+    MultiBandBlender b(inputImages[1], inputImages[0], 5, -300);
+    /*
     cv::imshow("Mask", b.GetMask());
     cv::waitKey(0);
-
+    */
 }

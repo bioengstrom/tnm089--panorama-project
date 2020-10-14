@@ -24,15 +24,17 @@ private:
 	void PrepImages();
 	void TestPyramids();
 
-	std::vector<cv::Mat> LaplacianPyramid(const cv::Mat& inImg);
-	std::vector<cv::Mat> GaussianPyramid(const cv::Mat& inImg);
-
+	std::vector<cv::Mat> BlendPyramids(const std::vector<cv::Mat>& LPA, const std::vector<cv::Mat>& LPB, const std::vector<cv::Mat>& MP);
+	cv::Mat ReconstructImage(const std::vector<cv::Mat>& BP);
 public:
 	MultiBandBlender(const cv::Mat& img1, const cv::Mat& img2, int bands);
 	MultiBandBlender(const cv::Mat& img1, const cv::Mat& img2, int bands, int overlap);
 	
 	~MultiBandBlender() {}
 
+	std::vector<cv::Mat> LaplacianPyramid(const cv::Mat& inImg);
+	std::vector<cv::Mat> GaussianPyramid(const cv::Mat& inImg);
+	
 	cv::Mat GetMask() { return _mask; }
 
 };
