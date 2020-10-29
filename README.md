@@ -5,6 +5,6 @@ By Isak Engström (isaen688@student.liu.se) and Henrik Nilsson (henni317@student
 
 There are **three parts** of the project: 
 
-- The original stitcher, found in the folder *stitcher_python*
-- The stitcher for evaluating blending methods, found in the folder *stitcher_cpp*
-- A **non-working** multiband blender, which is found in the folder *blenders_cpp*
+- The original stitcher, found in the folder *stitcher_python*.
+- The stitcher for evaluating blending methods, found in the folder *stitcher_cpp*.
+- A **non-working** multiband blender, which is found in the folder *blenders_cpp*. These blenders are not used by *stitcher_cpp*.  
