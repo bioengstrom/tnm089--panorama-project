@@ -31,34 +31,18 @@ void MultiBandBlender::ProcessNumBands() {
 }
 
 void MultiBandBlender::TestPyramids() {
-	std::vector<cv::Mat> LPA = LaplacianPyramid(_img1);
-	std::vector<cv::Mat> LPB = LaplacianPyramid(_img2);
+	std::vector<cv::Mat> LPA = LaplacianPyramid(_subA);
+	std::vector<cv::Mat> LPB = LaplacianPyramid(_subB);
 	std::vector<cv::Mat> GP = GaussianPyramid(_mask);
 
 	std::cout << "LP first size: " << LPA[0].size() << ", last size:" << LPA[(int)(_numBands - 1.0)].size() << "\n";
 	std::cout << "GP first size: " << GP[0].size() << ", last size:" << GP[(int)(_numBands - 1.0)].size() << "\n";
-	/*
-	cv::imshow("Pyramid test", LPA[0]);
-	cv::waitKey(0);
-	cv::imshow("Pyramid test", LPA[1]);
-	cv::waitKey(0);
-	cv::imshow("Pyramid test", LPA[_numBands - 1.0]);
-	cv::waitKey(0);
-	*/
 
+	std::cout << "Sizess LPA: " << LPA.size() << " LPB: " << LPB.size() << " GP: " << GP.size() << "\n";
 
 	std::vector<cv::Mat> testBlend = BlendPyramids(LPA, LPB, GP);
-	
-	/*
-	cv::imshow("Blend test", testBlend[0]);
-	cv::waitKey(0);
 
-	cv::imshow("Blend test", testBlend[1]);
-	cv::waitKey(0);
-
-	cv::imshow("Blend test", testBlend[3]);
-	cv::waitKey(0);*/
-
+	std::cout << "Blend size: " << testBlend.size() << "\n";
 
 	std::cout << "Before reconstruction\n";
 	cv::Mat res = ReconstructImage(testBlend);
@@ -77,14 +61,6 @@ std::vector<cv::Mat> MultiBandBlender::LaplacianPyramid(const cv::Mat& inImg) {
 		cv::pyrDown(img, downSampledImg);
 		cv::pyrUp(downSampledImg, upSampledImg);
 
-		/*
-		cv::imshow("orig img", img);
-		cv::waitKey(0);
-
-		cv::imshow("upsampled", upSampledImg);
-		cv::waitKey(0);
-		*/
-
 		cv::Mat m = img - upSampledImg;
 
 		result.push_back(m);
@@ -93,17 +69,6 @@ std::vector<cv::Mat> MultiBandBlender::LaplacianPyramid(const cv::Mat& inImg) {
 	result.push_back(img);
 
 	return result;
-}
-
-cv::Mat MultiBandBlender::ReconstructImage(const std::vector<cv::Mat>& BP) {
-	cv::Mat img = BP[(int)(_numBands - 2)], upSampledImg;
-
-	for (int i = _numBands - 3; i > 0; --i) {
-		cv::pyrUp(img, upSampledImg, BP[i].size());
-		img = upSampledImg + BP[i];
-	}
-
-	return img;
 }
 
 std::vector<cv::Mat> MultiBandBlender::GaussianPyramid(const cv::Mat& inImg) {
@@ -119,16 +84,30 @@ std::vector<cv::Mat> MultiBandBlender::GaussianPyramid(const cv::Mat& inImg) {
 	return result;
 }
 
+// TODO: correct the limits for the pyramid
+cv::Mat MultiBandBlender::ReconstructImage(const std::vector<cv::Mat>& BP) {
+	cv::Mat img = BP[(int)((int)_numBands - (int)2)], upSampledImg;
+
+	for (int i = _numBands - 3; i > 0; --i) {
+		cv::pyrUp(img, upSampledImg, BP[i].size());
+		img = upSampledImg + BP[i];
+	}
+
+	return img;
+}
+
+
 std::vector<cv::Mat> MultiBandBlender::BlendPyramids(const std::vector<cv::Mat>& LPA, const std::vector<cv::Mat>& LPB, const std::vector<cv::Mat>& MP) {
 	std::vector<cv::Mat> result;
 	std::cout << "Blending pyramids...\n";
 	cv::Mat temp;
 	cv::Mat revMP;
-	for (int i = 0; i < _numBands - 1; ++i) {
+	for (int i = 0; i < _numBands; ++i) {
 
 		temp = cv::Mat::zeros(MP[i].size(), MP[i].type());
 		temp.setTo(255);
 		revMP = temp - MP[i];
+
 		/*
 		cv::imshow("MP", MP[i]);
 		cv::waitKey(0);
@@ -136,6 +115,7 @@ std::vector<cv::Mat> MultiBandBlender::BlendPyramids(const std::vector<cv::Mat>&
 		cv::imshow("lpa", LPA[i]);
 		cv::waitKey(0);
 		*/
+
 		result.push_back(LPA[i].mul(MP[i]) + LPB[i].mul(revMP));
 	}
 
